@@ -1,0 +1,41 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: metrics-exporter-cron
+spec:
+  schedule: "*/5 * * * *"   # runs every 5 minutes
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: metrics-exporter
+              image: metrics-exporter:latest
+              imagePullPolicy: Never
+              env:
+                - name: PROMETHEUS_URL
+                  value: "http://monitoring-kube-prometheus-prometheus:9090"
+
+                - name: S3_BUCKET
+                  value: "kubesentinel-metrics"
+
+                # AWS credentials from your Kubernetes secret
+                - name: AWS_ACCESS_KEY_ID
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: AWS_ACCESS_KEY_ID
+
+                - name: AWS_SECRET_ACCESS_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: AWS_SECRET_ACCESS_KEY
+
+                - name: AWS_DEFAULT_REGION
+                  valueFrom:
+                    secretKeyRef:
+                      name: aws-credentials
+                      key: AWS_DEFAULT_REGION
+
+          restartPolicy: Never
